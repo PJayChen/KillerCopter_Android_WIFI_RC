@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ScrollView1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" >
+
+<TableLayout
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:stretchColumns="1,3" >
+
+ 
+
+   
+
+    <TableRow>
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/ip" />
+
+        <EditText
+            android:id="@+id/etremoteip"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_span="3"
+            android:text="192.168.0.10" />
+    </TableRow>
+
+    <TableRow>
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/port" />
+
+        <EditText
+            android:id="@+id/etremoteport"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:maxLength="5"
+            android:numeric="integer"
+            android:text="8080" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/localport" />
+
+        <EditText
+            android:id="@+id/etlocalport"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:maxLength="5"
+            android:numeric="integer"
+            android:text="8080" />
+    </TableRow>
+
+    <TableRow>
+
+        <Button
+            android:id="@+id/btnconnect"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_span="2"
+            android:text="@string/connect" />
+
+        <Button
+            android:id="@+id/btndisconnect"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_span="2"
+            android:text="@string/disconnect" />
+    </TableRow>
+
+    <TableRow>
+
+        <CheckBox
+            android:id="@+id/cbshex"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_span="2"
+            android:text="@string/shex" />
+
+        <CheckBox
+            android:id="@+id/cbrhex"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_span="2"
+            android:text="@string/rhex" />
+    </TableRow>
+>
+
+    <TableRow>
+
+        <TableLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_span="4"
+            android:stretchColumns="1" >
+
+            <TableRow>
+
+                <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:gravity="center_vertical"
+                    android:text="@string/rdata" />
+
+                <Spinner
+                    android:id="@+id/sprcharcodes"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:drawSelectorOnTop="true" />
+            </TableRow>
+        </TableLayout>
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/etrdata"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_span="4"
+            android:editable="false"
+            android:gravity="top"
+            android:lines="6"
+            android:scrollbars="vertical"
+            android:singleLine="false" />
+    </TableRow>
+
+    <TableRow>
+
+        <TableLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_span="4"
+            android:stretchColumns="1" >
+
+            <TableRow>
+
+                <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:gravity="center_vertical"
+                    android:text="@string/sdata" />
+
+                <Spinner
+                    android:id="@+id/spscharcodes"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:drawSelectorOnTop="true" />
+            </TableRow>
+        </TableLayout>
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/etsdata"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_span="3" />
+
+        <Button
+            android:id="@+id/btnsend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btnsend" />
+    </TableRow>
+
+</TableLayout> </ScrollView>

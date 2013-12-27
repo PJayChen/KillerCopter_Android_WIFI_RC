@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="app_name">KillerCopter</string>
+    <string name="ip">目標IP</string>
+    <string name="port">目標Port</string>
+    <string name="localport">本地Port</string>
+    <string name="connect">連線</string>
+    <string name="disconnect">斷線</string>
+    <string name="shex">16进制发送</string>
+    <string name="rhex">16进制接收</string>
+    <string name="rdata">接收数据 字符集:</string>
+    <string name="sdata">发送数据 字符集</string>
+    <string name="btnsend">发送</string>
+    <string name="menusave">保存接收数据</string>
+    <string name="menuclear">清空接收数据区</string>
+    <string name="menuexit">退出</string>
+    <string name="savefilepath">保存文件路径</string>
+    <string name="alertok">确定</string>
+    <string name="alertcancel">取消</string>
+    <string name="alertsavefiletilte">保存文件</string>
+    <string name="alertsavefileok">保存文件成功!</string>
+    <string name="alertsavefilefail">保存文件失败:</string>
+    <string name="alertsavefilepatherror">文件路径不存在</string>
+</resources>
