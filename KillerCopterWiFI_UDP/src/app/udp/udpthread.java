@@ -221,6 +221,15 @@ public class udpthread implements Runnable
 			sUdp.close();
 			sUdp = null;
 			sPacket = null;
+			
+			StringBuilder sb = new StringBuilder();
+			sb.append(etshowrdata.getText().toString().trim());
+			sb.append("\n");
+			sb.append("Send successfully!");
+			etshowrdata.setText(sb.toString().trim());
+			sb.delete(0, sb.length());
+			sb = null;
+			
 		}catch(IOException ie)
 		{
 			sUdp.close();
@@ -241,9 +250,10 @@ public class udpthread implements Runnable
 				rPacket = new DatagramPacket(rBuffer, rBuffer.length);
 			startThread();
 			result = true;
+			
 		} catch (SocketException se)
 		{
-			DisConnectSocket();
+			DisConnectSocket();			
 			System.out.println("open udp port error:" + se.getMessage());
 		}
 		return result;

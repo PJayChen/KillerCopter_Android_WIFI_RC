@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public class Ctrl_Signal extends Activity implements View.OnClickListener{
 
@@ -13,6 +14,10 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 	private int TarPort, LocPort;
 	private EditText editRx, editThr;
 	private Button btnThr, btnRise, btnFall;
+	private TextView txtCurrThr;
+	private int currThr;
+	StringBuilder sb = null;
+	private String SendData;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -38,14 +43,14 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 		udpSocket.setLocalPort(LocPort);
 		
 		//display connect information
-		StringBuilder sb = new StringBuilder();
+		sb = new StringBuilder();
 		sb.append(editRx.getText().toString().trim());
 		sb.append("\n");
 		sb.append("IP: ");
 		sb.append(IP);
 		sb.append("\nPort: ");
 		sb.append(TarPort);
-		sb.append("\nLocal Port");
+		sb.append("\nLocal Port: ");
 		sb.append(LocPort);
 		editRx.setText(sb.toString().trim());
 		sb.delete(0, sb.length());
@@ -68,15 +73,75 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 		btnThr = (Button) findViewById(R.id.btn_thr);
 		btnRise = (Button) findViewById(R.id.btn_rise);
 		btnFall = (Button) findViewById(R.id.btn_fall);
+		txtCurrThr = (TextView) findViewById(R.id.text_currThrust);
+		
+		btnThr.setOnClickListener(this);
+		btnRise.setOnClickListener(this);
+		btnFall.setOnClickListener(this);
 		
 		setUIState(false);
 		editThr.setText("800");
+		txtCurrThr.setText("Current Thrust: 800");
+		//store current Thrust value
+		currThr = Integer.parseInt(editThr.getText().toString());
+	}
+	
+	private void sendThrust(){
+		
+		sb = new StringBuilder();
+		sb.append("pwm ");
+		sb.append(String.valueOf(currThr));
+		sb.append("\n");
+		//send out commend "pwm xxxx" 
+		SendData = sb.toString();
+		udpSocket.SendData(SendData);
+		SendData = null;			
+		sb.delete(0, sb.length());
+		
+		//Display send thrust on TextView
+		sb.append("Current Thrust: ");
+		sb.append(String.valueOf(currThr));
+		txtCurrThr.setText(sb.toString());
+		
+		sb.delete(0, sb.length());
+		sb = null;
 	}
 	
 	@Override
 	public void onClick(View v) {
-		// TODO Auto-generated method stub
+		// TODO Auto-generated method stub		
+		switch(v.getId()){
+		case R.id.btn_thr:
+			
+			//get the input thrust value type in EditText
+			currThr = Integer.parseInt(editThr.getText().toString().trim());
+			sendThrust();
+			
+			break;
+			
+		case R.id.btn_rise:
+			
+			currThr += 50;
+			sendThrust();
+			
+			break;
+			
+		case R.id.btn_fall:
+			
+			currThr -= 50;
+			sendThrust();
+			
+			break;
+			
+		case R.id.btn_land:
+			
+			currThr = 800;
+			sendThrust();
+			
+			break;
+		default:;
 		
+		}
 	}
 
 }

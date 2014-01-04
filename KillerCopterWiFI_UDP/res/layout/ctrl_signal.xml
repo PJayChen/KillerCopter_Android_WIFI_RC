@@ -101,7 +101,7 @@
 
         <EditText
             android:id="@+id/editRx"
-            android:layout_width="match_parent"
+            android:layout_width="291dp"
             android:layout_height="114dp"
             android:ems="10"
             android:scrollbarStyle="outsideOverlay"
