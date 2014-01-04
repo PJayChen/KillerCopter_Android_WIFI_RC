@@ -13,7 +13,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 	private String IP;
 	private int TarPort, LocPort;
 	private EditText editRx, editThr;
-	private Button btnThr, btnRise, btnFall;
+	private Button btnThr, btnRise, btnFall, btnLand;
 	private TextView txtCurrThr;
 	private int currThr;
 	StringBuilder sb = null;
@@ -57,8 +57,8 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 		sb = null;
 		
 		//connect, if success all button can be clickable
-		if(udpSocket.ConnectSocket())
-			setUIState(true);
+		udpSocket.ConnectSocket();
+		setUIState(true);
 	}
 	
 	private void setUIState(boolean state){
@@ -73,11 +73,13 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 		btnThr = (Button) findViewById(R.id.btn_thr);
 		btnRise = (Button) findViewById(R.id.btn_rise);
 		btnFall = (Button) findViewById(R.id.btn_fall);
+		btnLand = (Button) findViewById(R.id.btn_land);
 		txtCurrThr = (TextView) findViewById(R.id.text_currThrust);
 		
 		btnThr.setOnClickListener(this);
 		btnRise.setOnClickListener(this);
 		btnFall.setOnClickListener(this);
+		btnLand.setOnClickListener(this);
 		
 		setUIState(false);
 		editThr.setText("800");
