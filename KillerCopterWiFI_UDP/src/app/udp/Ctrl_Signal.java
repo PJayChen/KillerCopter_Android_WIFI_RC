@@ -1,23 +1,32 @@
 package app.udp;
 
 import android.app.Activity;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class Ctrl_Signal extends Activity implements View.OnClickListener{
+public class Ctrl_Signal extends Activity implements View.OnClickListener, SensorEventListener{
 
 	private udpthread udpSocket = null;
 	private String IP;
 	private int TarPort, LocPort;
 	private EditText editRx, editThr;
-	private Button btnThr, btnRise, btnFall, btnLand;
+	private Button btnThr, btnRise, btnFall, btnLand, btnAcce;
 	private TextView txtCurrThr;
 	private int currThr;
 	StringBuilder sb = null;
 	private String SendData;
+	
+	private Sensor acce; //accelerometer
+	private SensorManager mySensorManager;
+	
+	private boolean accFlag = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -25,8 +34,11 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 		setContentView(R.layout.ctrl_signal);
 		
 		setView();
-		
 		setSocket();
+		
+		mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+		acce = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER); 
+		//mySensorManager.registerListener(this, acce, SensorManager.SENSOR_DELAY_NORMAL);
 		
 	}
 	
@@ -74,13 +86,16 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 		btnRise = (Button) findViewById(R.id.btn_rise);
 		btnFall = (Button) findViewById(R.id.btn_fall);
 		btnLand = (Button) findViewById(R.id.btn_land);
+		btnAcce = (Button) findViewById(R.id.btnAcc);
 		txtCurrThr = (TextView) findViewById(R.id.text_currThrust);
 		
 		btnThr.setOnClickListener(this);
 		btnRise.setOnClickListener(this);
 		btnFall.setOnClickListener(this);
 		btnLand.setOnClickListener(this);
+		btnAcce.setOnClickListener(this);
 		
+		btnAcce.setText("Accelerometer OFF");
 		setUIState(false);
 		editThr.setText("800");
 		txtCurrThr.setText("Current Thrust: 800");
@@ -91,9 +106,15 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 	private void sendThrust(){
 		
 		sb = new StringBuilder();
-		sb.append("pwm ");
-		sb.append(String.valueOf(currThr));
-		sb.append("\n");
+
+		if(currThr > 800){
+			sb.append("pwm ");
+			sb.append(String.valueOf(currThr));
+			sb.append("\n");
+		}else {
+			sb.append("\n");
+		}
+		
 		//send out commend "pwm xxxx" 
 		SendData = sb.toString();
 		udpSocket.SendData(SendData);
@@ -123,14 +144,14 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 			
 		case R.id.btn_rise:
 			
-			currThr += 50;
+			currThr = (currThr >= 2000)?2000:currThr + 50;
 			sendThrust();
 			
 			break;
 			
 		case R.id.btn_fall:
 			
-			currThr -= 50;
+			currThr = (currThr <= 800)?800:currThr - 50;
 			sendThrust();
 			
 			break;
@@ -139,11 +160,39 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener{
 			
 			currThr = 800;
 			sendThrust();
+
+			break;
 			
+		case R.id.btnAcc:
+			if(accFlag){
+				mySensorManager.registerListener(this, acce, SensorManager.SENSOR_DELAY_NORMAL);
+				accFlag = false;
+			}else{
+				mySensorManager.unregisterListener(this, acce);
+				accFlag = true;
+				btnAcce.setText("Accelerometer OFF");
+			}
+				
 			break;
 		default:;
 		
 		}
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		// TODO Auto-generated method stub
+		float x = event.values[0];
+		float y = event.values[1];
+		
+		btnAcce.setText("X: " + String.valueOf(x) + ", Y: " + String.valueOf(y)+ "    ->");
+		
 	}
 
 }

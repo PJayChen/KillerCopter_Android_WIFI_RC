@@ -94,10 +94,16 @@
                 android:id="@+id/btn_land"
                 android:layout_width="100dp"
                 android:layout_height="83dp"
-                android:layout_weight="0.51"
+                android:layout_weight="26.03"
                 android:text="Landing" />
 
         </LinearLayout>
+
+        <Button
+            android:id="@+id/btnAcc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Acc" />
 
         <EditText
             android:id="@+id/editRx"
