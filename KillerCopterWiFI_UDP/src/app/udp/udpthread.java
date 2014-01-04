@@ -99,6 +99,7 @@ public class udpthread implements Runnable
 		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	private void stopThread()
 	{
 		if (rthread != null)

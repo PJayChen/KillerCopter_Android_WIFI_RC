@@ -54,7 +54,7 @@
             android:layout_height="wrap_content"
             android:maxLength="5"
             android:numeric="integer"
-            android:text="8080" />
+            android:text="55056" />
     </TableRow>
 
     <TableRow>
