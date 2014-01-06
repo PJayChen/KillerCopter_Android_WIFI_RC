@@ -70,7 +70,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			
 			while(t_run_flag){
 				try {
-					System.out.println("mThread delay!!!!");
+					System.out.println("run_updateAcc running !!!!");
 					
 					Thread.sleep(200);
 					
@@ -117,6 +117,18 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			
 		}//End of run()
 	};
+	
+	//Stop thread by set the runnable flag to FLASE 
+	private boolean stopThread(Thread t){
+		boolean flag = true;
+		if(t != null){
+			flag = false;
+			t.interrupt();
+			System.out.printf("Thread %s Stop\n", t.getName());
+			t = null;						
+		}
+		return flag;
+	}
 	
 	private void setSocket(){
 		udpSocket = new udpthread(editRx);
@@ -246,16 +258,17 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 				
 				//Create a thread for Tx Setpoint and start it ------
 				t_run_flag = true;
-				t_acce = new Thread(run_updateAcc);		
+				t_acce = new Thread(run_updateAcc);
+				t_acce.setName("t_acce");
 				t_acce.start();
+				System.out.printf("Thread %s Start\n", t_acce.getName());
 				
 			}else{
 				mySensorManager.unregisterListener(this, acce);
 				accFlag = true; //acce will turn on while push down the button next time
 				
 				//Stop the thread for Tx Setpoint ------
-				t_run_flag = false;
-				t_acce.interrupt();
+				t_run_flag = stopThread(t_acce);
 				t_acce = null;
 				
 				btnAcce.setText("Accelerometer OFF");
@@ -296,11 +309,8 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	protected void onDestroy(){
 		super.onDestroy();
 		//Stop Thread
-		if(t_acce != null){
-			t_run_flag = false;
-			t_acce.interrupt();
-			t_acce = null;
-		}
+		t_run_flag = stopThread(t_acce);
+		t_acce = null;
 		
 	}
 	
