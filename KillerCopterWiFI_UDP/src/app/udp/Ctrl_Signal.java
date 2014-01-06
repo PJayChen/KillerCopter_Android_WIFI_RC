@@ -98,7 +98,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 						roll_SP = "roll";
 					}
 					
-					dataBd.putString("roll_SP", roll_SP + "(" + String.valueOf(y) + ") ->");
+					dataBd.putString("roll_SP", roll_SP + "(" + String.valueOf(y) + ")");
 					//btnAcce.setText( btnAcce.getText() + roll_SP + "(" + String.valueOf(y) + ") ->");
 					roll_SP = roll_SP + "\n";
 					dataBd.putString("roll_SP_udp", roll_SP);
@@ -220,7 +220,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			
 		case R.id.btn_rise:
 			
-			currThr = (currThr >= 2000)?2000:currThr + 50;
+			currThr = (currThr >= 1800)?1800:currThr + 50;
 			sendThrust();
 			
 			break;
