@@ -6,6 +6,9 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,34 +16,107 @@ import android.widget.TextView;
 
 public class Ctrl_Signal extends Activity implements View.OnClickListener, SensorEventListener{
 
-	private udpthread udpSocket = null;
-	private String IP;
-	private int TarPort, LocPort;
+	
+	//View -----------------------------
 	private EditText editRx, editThr;
 	private Button btnThr, btnRise, btnFall, btnLand, btnAcce;
 	private TextView txtCurrThr;
-	private int currThr;
+	private int currThr;  //store current thrust value
+
+	//UDP ------------------------------
+	private String IP;
+	private int TarPort, LocPort;
+	private udpthread udpSocket = null;
 	StringBuilder sb = null;
 	private String SendData;
 	
+	//Sensor ---------------------------
 	private Sensor acce; //accelerometer
-	private SensorManager mySensorManager;
+	private SensorManager mySensorManager; //the manager of all sensor
+	private boolean accFlag = true; //enable accelerometer or not
+	private float x, y;
 	
-	private boolean accFlag = false;
+	//Thread ---------------------------	
+	private static final int STR_ACC = 1;
+	//UI(main) thread handler
+	private Handler UI_Handler = new Handler(){
+		@Override
+		public void handleMessage(Message msg){
+			
+			switch(msg.what){
+				case STR_ACC:
+					btnAcce.setText(msg.getData().getString("pitch_SP") + msg.getData().getString("roll_SP")); 
+					udpSocket.SendData(msg.getData().getString("pitch_SP_udp"));
+					udpSocket.SendData(msg.getData().getString("roll_SP_udp"));
+					this.removeMessages(STR_ACC);					
+					System.out.println("STR_ACC running!!!!");
+					break;
+				default:
+					super.handleMessage(msg);
+					break;
+			}
+		}
+	};
 	
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.ctrl_signal);
-		
-		setView();
-		setSocket();
-		
-		mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-		acce = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER); 
-		//mySensorManager.registerListener(this, acce, SensorManager.SENSOR_DELAY_NORMAL);
-		
-	}
+	//A thread for determine Setpoint  ------------------------------------
+	private Thread t_acce;
+	private boolean t_run_flag = true;
+	private Runnable run_updateAcc = new Runnable(){
+		public void run(){
+			
+			System.out.println("mThread is working!!!!");
+						
+			String pitch_SP, roll_SP; //setting point of pitch and roll
+			
+			while(t_run_flag){
+				try {
+					System.out.println("mThread delay!!!!");
+					
+					Thread.sleep(200);
+					
+					Bundle dataBd = new Bundle();
+					
+					if(x > 5){
+						pitch_SP = "pitch p";
+					}else if(x < -5){
+						pitch_SP = "pitch n";
+					}else{
+						pitch_SP = "pitch";
+					}
+					
+					dataBd.putString("pitch_SP", pitch_SP + "(" + String.valueOf(x) + "), " );
+					//btnAcce.setText(pitch_SP + "(" + String.valueOf(x) + "), " );
+					pitch_SP = pitch_SP + "\n";
+					dataBd.putString("pitch_SP_udp", pitch_SP);
+					//udpSocket.SendData(pitch_SP);
+					
+					if(y > 5){
+						roll_SP = "roll p";
+					}else if(y < -5){
+						roll_SP = "roll n";
+					}else{
+						roll_SP = "roll";
+					}
+					
+					dataBd.putString("roll_SP", roll_SP + "(" + String.valueOf(y) + ") ->");
+					//btnAcce.setText( btnAcce.getText() + roll_SP + "(" + String.valueOf(y) + ") ->");
+					roll_SP = roll_SP + "\n";
+					dataBd.putString("roll_SP_udp", roll_SP);
+					//udpSocket.SendData(roll_SP);
+					
+					Message msg = new Message();
+					msg.what = STR_ACC;
+					msg.setData(dataBd);
+					UI_Handler.sendMessage(msg);
+					
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}//End of while
+			
+		}//End of run()
+	};
 	
 	private void setSocket(){
 		udpSocket = new udpthread(editRx);
@@ -166,13 +242,26 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		case R.id.btnAcc:
 			if(accFlag){
 				mySensorManager.registerListener(this, acce, SensorManager.SENSOR_DELAY_NORMAL);
-				accFlag = false;
+				accFlag = false; //acce will turn off while push down the button next time 
+				
+				//Create a thread for Tx Setpoint and start it ------
+				t_run_flag = true;
+				t_acce = new Thread(run_updateAcc);		
+				t_acce.start();
+				
 			}else{
 				mySensorManager.unregisterListener(this, acce);
-				accFlag = true;
+				accFlag = true; //acce will turn on while push down the button next time
+				
+				//Stop the thread for Tx Setpoint ------
+				t_run_flag = false;
+				t_acce.interrupt();
+				t_acce = null;
+				
 				btnAcce.setText("Accelerometer OFF");
 			}
-				
+			udpSocket.SendData("pitch\n");
+			udpSocket.SendData("roll\n");
 			break;
 		default:;
 		
@@ -188,11 +277,31 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		// TODO Auto-generated method stub
-		float x = event.values[0];
-		float y = event.values[1];
-		
-		btnAcce.setText("X: " + String.valueOf(x) + ", Y: " + String.valueOf(y)+ "    ->");
-		
+		x = event.values[0];
+		y = event.values[1];
 	}
 
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.ctrl_signal);
+		
+		setView();
+		setSocket();
+		
+		mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+		acce = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER); 
+	}
+	
+	protected void onDestroy(){
+		super.onDestroy();
+		//Stop Thread
+		if(t_acce != null){
+			t_run_flag = false;
+			t_acce.interrupt();
+			t_acce = null;
+		}
+		
+	}
+	
 }

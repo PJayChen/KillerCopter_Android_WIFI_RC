@@ -72,12 +72,11 @@
             android:layout_height="87dp"
             android:text="Fall" />
 
-        <TextView
-            android:id="@+id/textView4"
-            android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/btnAcc"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="   "
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:text="Acc" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -98,12 +97,6 @@
                 android:text="Landing" />
 
         </LinearLayout>
-
-        <Button
-            android:id="@+id/btnAcc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Acc" />
 
         <EditText
             android:id="@+id/editRx"
