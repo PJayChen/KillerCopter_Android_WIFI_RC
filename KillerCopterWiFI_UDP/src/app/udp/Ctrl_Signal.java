@@ -19,7 +19,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	
 	//View -----------------------------
 	private EditText editRx, editThr;
-	private Button btnThr, btnRise, btnFall, btnLand, btnAcce;
+	private Button btnThr, btnRise, btnFall, btnLand, btnAcce, btnShutdown;
 	private TextView txtCurrThr;
 	private int currThr;  //store current thrust value
 
@@ -37,19 +37,25 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	private float x, y;
 	
 	//Thread ---------------------------	
-	private static final int STR_ACC = 1;
+	private static final int T_ACC = 1, T_LANDING = 2;
 	//UI(main) thread handler
 	private Handler UI_Handler = new Handler(){
 		@Override
 		public void handleMessage(Message msg){
 			
 			switch(msg.what){
-				case STR_ACC:
+				case T_ACC:
 					btnAcce.setText(msg.getData().getString("pitch_SP") + msg.getData().getString("roll_SP")); 
 					udpSocket.SendData(msg.getData().getString("pitch_SP_udp"));
 					udpSocket.SendData(msg.getData().getString("roll_SP_udp"));
-					this.removeMessages(STR_ACC);					
+					this.removeMessages(T_ACC);					
 					System.out.println("STR_ACC running!!!!");
+					break;
+					
+				case T_LANDING:
+					sendThrust();
+					this.removeMessages(T_LANDING);
+					System.out.println("Landing!!!!");
 					break;
 				default:
 					super.handleMessage(msg);
@@ -58,6 +64,17 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		}
 	};
 	
+	//Stop thread by set the runnable flag to FLASE 
+	private boolean stopThread(Thread t){
+		boolean flag = true;
+		if(t != null){
+			flag = false;
+			t.interrupt();
+			System.out.printf("Thread %s Stop\n", t.getName());
+			t = null;						
+		}
+		return flag;
+	}
 	//A thread for determine Setpoint  ------------------------------------
 	private Thread t_acce;
 	private boolean t_run_flag = true;
@@ -75,7 +92,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					Thread.sleep(200);
 					
 					Bundle dataBd = new Bundle();
-					
+					//Pitch part ------------------------------------------------
 					if(x > 5){
 						pitch_SP = "pitch p";
 					}else if(x < -5){
@@ -85,11 +102,10 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					}
 					
 					dataBd.putString("pitch_SP", pitch_SP + "(" + String.valueOf(x) + "), " );
-					//btnAcce.setText(pitch_SP + "(" + String.valueOf(x) + "), " );
 					pitch_SP = pitch_SP + "\n";
 					dataBd.putString("pitch_SP_udp", pitch_SP);
-					//udpSocket.SendData(pitch_SP);
 					
+					//Roll part -------------------------------------------------
 					if(y > 5){
 						roll_SP = "roll p";
 					}else if(y < -5){
@@ -99,13 +115,12 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					}
 					
 					dataBd.putString("roll_SP", roll_SP + "(" + String.valueOf(y) + ")");
-					//btnAcce.setText( btnAcce.getText() + roll_SP + "(" + String.valueOf(y) + ") ->");
 					roll_SP = roll_SP + "\n";
 					dataBd.putString("roll_SP_udp", roll_SP);
-					//udpSocket.SendData(roll_SP);
 					
+					//Send data to UI handler
 					Message msg = new Message();
-					msg.what = STR_ACC;
+					msg.what = T_ACC;
 					msg.setData(dataBd);
 					UI_Handler.sendMessage(msg);
 					
@@ -118,17 +133,32 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		}//End of run()
 	};
 	
-	//Stop thread by set the runnable flag to FLASE 
-	private boolean stopThread(Thread t){
-		boolean flag = true;
-		if(t != null){
-			flag = false;
-			t.interrupt();
-			System.out.printf("Thread %s Stop\n", t.getName());
-			t = null;						
+	private Runnable run_landing = new Runnable(){
+		public void run(){
+			
+			try {
+				if(currThr > 800){
+					if(currThr > 1200) currThr = 1200;
+					Message msg = new Message();
+					msg.what = T_LANDING;
+					UI_Handler.sendMessage(msg);
+					
+					while(currThr > 800){
+						Thread.sleep(1000);
+						currThr -= 50;
+						msg = new Message();
+						msg.what = T_LANDING;
+						UI_Handler.sendMessage(msg);						
+					}
+					
+				}
+				
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		return flag;
-	}
+	};
 	
 	private void setSocket(){
 		udpSocket = new udpthread(editRx);
@@ -175,6 +205,8 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		btnFall = (Button) findViewById(R.id.btn_fall);
 		btnLand = (Button) findViewById(R.id.btn_land);
 		btnAcce = (Button) findViewById(R.id.btnAcc);
+		btnShutdown = (Button) findViewById(R.id.btn_shutdown);
+		
 		txtCurrThr = (TextView) findViewById(R.id.text_currThrust);
 		
 		btnThr.setOnClickListener(this);
@@ -182,6 +214,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		btnFall.setOnClickListener(this);
 		btnLand.setOnClickListener(this);
 		btnAcce.setOnClickListener(this);
+		btnShutdown.setOnClickListener(this);
 		
 		btnAcce.setText("Accelerometer OFF");
 		setUIState(false);
@@ -222,33 +255,25 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	public void onClick(View v) {
 		// TODO Auto-generated method stub		
 		switch(v.getId()){
-		case R.id.btn_thr:
-			
+		case R.id.btn_thr:			
 			//get the input thrust value type in EditText
 			currThr = Integer.parseInt(editThr.getText().toString().trim());
-			sendThrust();
-			
+			sendThrust();			
 			break;
 			
-		case R.id.btn_rise:
-			
+		case R.id.btn_rise:			
 			currThr = (currThr >= 1800)?1800:currThr + 50;
-			sendThrust();
-			
+			sendThrust();			
 			break;
 			
-		case R.id.btn_fall:
-			
+		case R.id.btn_fall:			
 			currThr = (currThr <= 800)?800:currThr - 50;
-			sendThrust();
-			
+			sendThrust();		
 			break;
 			
 		case R.id.btn_land:
-			
-			currThr = 800;
-			sendThrust();
-
+			Thread t_landing = new Thread(run_landing);
+			t_landing.start();
 			break;
 			
 		case R.id.btnAcc:
@@ -275,6 +300,10 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			}
 			udpSocket.SendData("pitch\n");
 			udpSocket.SendData("roll\n");
+			break;
+		case R.id.btn_shutdown:
+			currThr = 800;
+			sendThrust();
 			break;
 		default:;
 		

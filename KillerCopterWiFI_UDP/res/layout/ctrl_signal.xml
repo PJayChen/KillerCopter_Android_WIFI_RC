@@ -17,8 +17,7 @@
                 android:id="@+id/textView1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Thrust: "
-                android:textAppearance="?android:attr/textAppearanceLarge" />
+                android:text="Thrust: "/>
 
             <EditText
                 android:id="@+id/editThr"
@@ -38,9 +37,16 @@
                 android:text="Send" />
 
             <Button
+                android:id="@+id/btn_takeOff"
+                android:layout_width="87dp"
+                android:layout_height="match_parent"
+                android:textSize="24px"
+                android:text="Take off" />
+
+            <Button
                 android:id="@+id/btnAcc"
                 android:layout_width="247dp"
-                android:layout_height="65dp"
+                android:layout_height="wrap_content"
                 android:text="Acc" />
 
         </LinearLayout>
@@ -61,14 +67,14 @@
                 android:layout_width="225dp"
                 android:layout_height="96dp"
                 android:layout_weight="0.49"
+                android:textSize="48px"
                 android:text="Rise" />
 
             <Button
-                android:id="@+id/btn_takeOff"
-                android:layout_width="100dp"
+                android:id="@+id/btn_shutdown"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_weight="0.48"
-                android:text="Take off" />
+                android:text="Shutdown" />
 
         </LinearLayout>
 
@@ -81,6 +87,7 @@
                 android:layout_width="222dp"
                 android:layout_height="87dp"
                 android:layout_weight="27.38"
+                android:textSize="48px"
                 android:text="Fall" />
 
             <Button
@@ -88,6 +95,7 @@
                 android:layout_width="100dp"
                 android:layout_height="83dp"
                 android:layout_weight="26.03"
+                android:textSize="48px"
                 android:text="Landing" />
 
         </LinearLayout>
