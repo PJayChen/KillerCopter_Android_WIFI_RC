@@ -224,7 +224,7 @@ public class udpthread implements Runnable
 			sUdp.close();
 			sUdp = null;
 			sPacket = null;
-			
+			System.out.println("Send data is: " + SData);
 			StringBuilder sb = new StringBuilder();
 			sb.append(etshowrdata.getText().toString().trim());
 			sb.append("\n");

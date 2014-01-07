@@ -33,10 +33,10 @@ public class IP_setting extends Activity implements View.OnClickListener{
 		btnConnect.setOnClickListener(this);
 		btnST_MW.setOnClickListener(this);
 		
-		//editIP.setText("192.168.0.10");
-		//editTarPort.setText("8080");
-		editIP.setText("10.42.0.1");
-		editTarPort.setText("55056");
+		editIP.setText("192.168.0.10");
+		editTarPort.setText("8080");
+		//editIP.setText("10.42.0.1");
+		//editTarPort.setText("55056");
 		
 		editLocPort.setText("55056");
 	}
