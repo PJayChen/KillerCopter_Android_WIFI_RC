@@ -18,10 +18,12 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 
 	
 	//View -----------------------------
-	private EditText editRx, editThr;
-	private Button btnThr, btnRise, btnFall, btnLand, btnAcce, btnShutdown;
+	private EditText editRx, editThr, editScale;
+	private Button btnThr, btnRise, btnFall, btnLand, btnAcce, btnShutdown, btnScale;
 	private TextView txtCurrThr;
+	//Variable -------------------------
 	private int currThr;  //store current thrust value
+	private int ThrScale;
 
 	//UDP ------------------------------
 	private String IP;
@@ -48,8 +50,13 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					btnAcce.setText(msg.getData().getString("pitch_SP") + msg.getData().getString("roll_SP")); 
 					udpSocket.SendData(msg.getData().getString("pitch_SP_udp"));
 					udpSocket.SendData(msg.getData().getString("roll_SP_udp"));
-					this.removeMessages(T_ACC);					
-					System.out.println("STR_ACC running!!!!");
+					this.removeMessages(T_ACC);				
+					System.out.println("Accelermeter send data!!!!");
+					if(t_run_flag == false){
+						btnAcce.setText("Accelerometer OFF");
+						udpSocket.SendData("pitch\n");
+						udpSocket.SendData("roll\n");
+					}
 					break;
 					
 				case T_LANDING:
@@ -66,33 +73,106 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	
 	//Stop thread by set the runnable flag to FLASE 
 	private boolean stopThread(Thread t){
-		boolean flag = true;
+		//boolean flag = true;
 		if(t != null){
-			flag = false;
+			//flag = false;
 			t.interrupt();
 			System.out.printf("Thread %s Stop\n", t.getName());
 			t = null;						
 		}
-		return flag;
+		return false;
 	}
 	//A thread for determine Setpoint  ------------------------------------
 	private Thread t_acce;
-	private boolean t_run_flag = true;
+	private boolean t_run_flag = true, flag_send = true;
+	//private static final int S0_RST = 0, S1_GREATER = 1, S2_LESS = 2, S3_MID = 3, S4_IDLE = 4;
+	//private int counter = 0, curr_state, next_state;
+	//private float x_last = 0, y_last;
 	private Runnable run_updateAcc = new Runnable(){
 		public void run(){
 			
 			System.out.println("mThread is working!!!!");
 						
-			String pitch_SP, roll_SP; //setting point of pitch and roll
+			String pitch_SP = null, roll_SP = null; //setting point of pitch and roll
+			
+			//curr_state = 0;//reset to S0
+			//next_state = 0;
 			
 			while(t_run_flag){
-				try {
-					System.out.println("run_updateAcc running !!!!");
+				try {			
+					/*
+					curr_state = next_state;
 					
-					Thread.sleep(200);
+					System.out.printf("curr_state = %d\n", curr_state);
+					
+					switch(curr_state){
+						case S0_RST:
+								if(x > 5) next_state = S1_GREATER;
+								else if(x < -5) next_state = S2_LESS;
+								else next_state = S4_IDLE;
+							break;
+						case S1_GREATER:
+								if(counter >= 2) next_state = S4_IDLE;
+							break;
+						case S2_LESS:
+								if(counter >= 2) next_state = S4_IDLE;
+							break;
+						case S3_MID:
+								if(counter >= 2) next_state = S4_IDLE;
+							break;
+						case S4_IDLE:
+								if(x_last < 5 && x > 5) next_state = S1_GREATER;
+								else if(x_last > -5 && x < -5) next_state = S2_LESS;
+								else if( (x_last > 5 || x_last < -5) && (x < 5 || x < -5) ) next_state = S3_MID;
+								else next_state = S4_IDLE;
+							break;
+					}//End of switch(curr_state)
+					
+					Bundle dataBd = new Bundle();
+					switch(curr_state){
+						case S0_RST:
+								counter = 0;
+								pitch_SP = "pitch";
+								flag_send = false;
+							break;
+						case S1_GREATER:
+								x_last = (x > 5)?x:x_last;
+								Thread.sleep(800);								
+								pitch_SP = "pitch p";
+								counter++;
+								flag_send = true;
+							break;
+						case S2_LESS:
+								x_last = (x < -5)?x:x_last;
+								Thread.sleep(800);
+								pitch_SP = "pitch n";
+								counter++;
+								flag_send = true;
+							break;
+						case S3_MID:
+								if(x < 5 || x > -5) x_last = x;
+								Thread.sleep(800);
+								pitch_SP = "pitch";
+								counter++;
+								flag_send = true;
+							break;
+						case S4_IDLE:
+								Thread.sleep(800);
+								counter = 0;
+								flag_send = true;
+							break;
+					}
+					
+					dataBd.putString("pitch_SP", pitch_SP + "(" + String.valueOf(x) + "), " );
+					//pitch_SP = pitch_SP + "\n";
+					dataBd.putString("pitch_SP_udp", pitch_SP + "\n");
+					*/
+					
+					Thread.sleep(1000);
 					
 					Bundle dataBd = new Bundle();
 					//Pitch part ------------------------------------------------
+					
 					if(x > 5){
 						pitch_SP = "pitch p";
 					}else if(x < -5){
@@ -104,6 +184,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					dataBd.putString("pitch_SP", pitch_SP + "(" + String.valueOf(x) + "), " );
 					pitch_SP = pitch_SP + "\n";
 					dataBd.putString("pitch_SP_udp", pitch_SP);
+					
 					
 					//Roll part -------------------------------------------------
 					if(y > 5){
@@ -119,10 +200,12 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					dataBd.putString("roll_SP_udp", roll_SP);
 					
 					//Send data to UI handler
-					Message msg = new Message();
-					msg.what = T_ACC;
-					msg.setData(dataBd);
-					UI_Handler.sendMessage(msg);
+					if(flag_send){
+						Message msg = new Message();
+						msg.what = T_ACC;
+						msg.setData(dataBd);
+						UI_Handler.sendMessage(msg);
+					}
 					
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
@@ -146,6 +229,8 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					while(currThr > 800){
 						Thread.sleep(1000);
 						currThr -= 50;
+						currThr = (currThr < 800)?800:currThr;
+						
 						msg = new Message();
 						msg.what = T_LANDING;
 						UI_Handler.sendMessage(msg);						
@@ -200,12 +285,15 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	public void setView(){
 		editRx = (EditText) findViewById(R.id.editRx);
 		editThr = (EditText) findViewById(R.id.editThr);
+		editScale = (EditText) findViewById(R.id.editScale);
+		
 		btnThr = (Button) findViewById(R.id.btn_thr);
 		btnRise = (Button) findViewById(R.id.btn_rise);
 		btnFall = (Button) findViewById(R.id.btn_fall);
 		btnLand = (Button) findViewById(R.id.btn_land);
 		btnAcce = (Button) findViewById(R.id.btnAcc);
 		btnShutdown = (Button) findViewById(R.id.btn_shutdown);
+		btnScale = (Button) findViewById(R.id.btn_scale);
 		
 		txtCurrThr = (TextView) findViewById(R.id.text_currThrust);
 		
@@ -215,13 +303,20 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		btnLand.setOnClickListener(this);
 		btnAcce.setOnClickListener(this);
 		btnShutdown.setOnClickListener(this);
+		btnScale.setOnClickListener(this);
 		
+		//Initial Text ----------------------------
 		btnAcce.setText("Accelerometer OFF");
 		setUIState(false);
 		editThr.setText("800");
 		txtCurrThr.setText("Current Thrust: 800");
 		//store current Thrust value
+		editScale.setText("50");
+		ThrScale = Integer.parseInt(editScale.getText().toString());
+		btnScale.setText(String.valueOf(ThrScale));
 		currThr = Integer.parseInt(editThr.getText().toString());
+		
+		btnLand.setClickable(false);
 	}
 	
 	private void sendThrust(){
@@ -262,12 +357,12 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			break;
 			
 		case R.id.btn_rise:			
-			currThr = (currThr >= 1800)?1800:currThr + 50;
+			currThr = (currThr >= 1800)?1800:currThr + ThrScale;
 			sendThrust();			
 			break;
 			
 		case R.id.btn_fall:			
-			currThr = (currThr <= 800)?800:currThr - 50;
+			currThr = (currThr <= 800)?800:currThr - ThrScale;
 			sendThrust();		
 			break;
 			
@@ -297,17 +392,22 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 				t_acce = null;
 				
 				btnAcce.setText("Accelerometer OFF");
+				udpSocket.SendData("pitch\n");
+				udpSocket.SendData("roll\n");
 			}
-			udpSocket.SendData("pitch\n");
-			udpSocket.SendData("roll\n");
 			break;
 		case R.id.btn_shutdown:
 			currThr = 800;
 			sendThrust();
 			break;
+		case R.id.btn_scale:
+			ThrScale = Integer.valueOf(editScale.getText().toString());
+			ThrScale = (ThrScale > 50)?50:( (ThrScale < 15)?15:ThrScale );
+			btnScale.setText(String.valueOf(ThrScale));
+			break;
 		default:;
 		
-		}
+		}//End of switch
 	}
 
 	@Override
