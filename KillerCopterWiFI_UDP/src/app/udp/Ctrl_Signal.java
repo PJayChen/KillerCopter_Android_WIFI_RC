@@ -1,6 +1,7 @@
 package app.udp;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -61,6 +63,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					
 				case T_LANDING:
 					sendThrust();
+					if(currThr <= 800) btnLand.setBackgroundColor(Color.RED);
 					this.removeMessages(T_LANDING);
 					System.out.println("Landing!!!!");
 					break;
@@ -305,11 +308,15 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		btnShutdown.setOnClickListener(this);
 		btnScale.setOnClickListener(this);
 		
+		btnLand.setBackgroundColor(Color.RED);
+		btnShutdown.setBackgroundColor(Color.YELLOW);
 		//Initial Text ----------------------------
 		btnAcce.setText("Accelerometer OFF");
 		setUIState(false);
 		editThr.setText("800");
 		txtCurrThr.setText("Current Thrust: 800");
+		
+		
 		//store current Thrust value
 		editScale.setText("50");
 		ThrScale = Integer.parseInt(editScale.getText().toString());
@@ -369,6 +376,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		case R.id.btn_land:
 			Thread t_landing = new Thread(run_landing);
 			t_landing.start();
+			btnLand.setClickable(false);
 			break;
 			
 		case R.id.btnAcc:
@@ -408,6 +416,15 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		default:;
 		
 		}//End of switch
+		if(currThr > 800){
+			btnLand.setClickable(true);
+			btnLand.setBackgroundColor(Color.GREEN);
+		}
+		else{
+			btnLand.setClickable(false);
+			btnLand.setBackgroundColor(Color.RED);
+		}
+		
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package app.udp;
 
 import android.os.Handler;
 import android.os.Message;
+import android.text.method.ScrollingMovementMethod;
 import android.widget.EditText;
 
 import java.io.IOException;
@@ -43,6 +44,8 @@ public class udpthread implements Runnable
 				sb.append("\n");
 				sb.append(sRecvData);
 				etshowrdata.setText(sb.toString().trim());
+				etshowrdata.setMovementMethod(ScrollingMovementMethod.getInstance());
+				etshowrdata.setSelection(etshowrdata.getText().length(), etshowrdata.getText().length());
 				sb.delete(0, sb.length());
 				sb = null;
 			}
