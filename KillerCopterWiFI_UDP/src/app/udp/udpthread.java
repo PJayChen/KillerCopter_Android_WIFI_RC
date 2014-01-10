@@ -154,7 +154,8 @@ public class udpthread implements Runnable
 				sRecvData = recvHexData(rPacket.getLength());
 			else
 				sRecvData = new String(rPacket.getData(),currentRCodes).trim();
-			sRecvData = String.format("[%s:%d//%s]%s", rPacket.getAddress().getHostAddress(), rPacket.getPort(), sdf.format(new Date()), sRecvData);
+			
+			//sRecvData = String.format("[%s:%d//%s]%s", rPacket.getAddress().getHostAddress(), rPacket.getPort(), sdf.format(new Date()), sRecvData);
 		} catch (IOException ie)
 		{
 			System.out.println("recvdata error:" + ie.getMessage());

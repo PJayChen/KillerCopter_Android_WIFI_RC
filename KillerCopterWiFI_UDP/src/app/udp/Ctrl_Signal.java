@@ -1,6 +1,7 @@
 package app.udp;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.os.Vibrator;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.Button;
@@ -21,12 +23,15 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	
 	//View -----------------------------
 	private EditText editRx, editThr, editScale;
-	private Button btnThr, btnRise, btnFall, btnLand, btnAcce, btnShutdown, btnScale;
+	private Button btnThr, btnRise, btnFall, btnLand, btnAcce, btnShutdown, btnScale, btnLock, btnTakeOff, btnRise25;
 	private TextView txtCurrThr;
 	//Variable -------------------------
 	private int currThr;  //store current thrust value
 	private int ThrScale;
 
+	
+	Vibrator vibrator = null;
+	  
 	//UDP ------------------------------
 	private String IP;
 	private int TarPort, LocPort;
@@ -117,7 +122,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			String pitch_SP = null, roll_SP = null; //setting point of pitch and roll			
 				try {			
 					while(t_run_flag){
-						Thread.sleep(1000);
+						Thread.sleep(500);
 						
 						Bundle dataBd = new Bundle();
 						//Pitch part ------------------------------------------------
@@ -203,7 +208,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			
 			try {
 				if(currThr > 800){
-					if(currThr > 1200) currThr = 1200;
+					if(currThr > 1400) currThr = 1400;
 					Message msg = new Message();
 					msg.what = T_LANDING;
 					UI_Handler.sendMessage(msg);
@@ -255,13 +260,18 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		
 		//connect, if success all button can be clickable
 		udpSocket.ConnectSocket();
-		setUIState(true);
+		
 	}
 	
-	private void setUIState(boolean state){
+	private boolean btnState;
+	private void setBtnState(boolean state){
 		btnThr.setClickable(state);
 		btnRise.setClickable(state);
 		btnFall.setClickable(state);
+		btnLand.setClickable(state);
+		btnAcce.setClickable(state);
+		btnShutdown.setClickable(state);
+		btnRise25.setClickable(state);
 	}
 	
 	public void setView(){
@@ -276,6 +286,9 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		btnAcce = (Button) findViewById(R.id.btnAcc);
 		btnShutdown = (Button) findViewById(R.id.btn_shutdown);
 		btnScale = (Button) findViewById(R.id.btn_scale);
+		btnLock = (Button) findViewById(R.id.btnLock);
+		btnTakeOff = (Button) findViewById(R.id.btn_takeOff);
+		btnRise25 = (Button) findViewById(R.id.btnRise25);
 		
 		txtCurrThr = (TextView) findViewById(R.id.text_currThrust);
 		
@@ -286,12 +299,18 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		btnAcce.setOnClickListener(this);
 		btnShutdown.setOnClickListener(this);
 		btnScale.setOnClickListener(this);
+		btnLock.setOnClickListener(this);
+		btnTakeOff.setOnClickListener(this);
+		btnRise25.setOnClickListener(this);
+		
+		btnTakeOff.setClickable(false);
 		
 		btnLand.setBackgroundColor(Color.RED);
 		btnShutdown.setBackgroundColor(Color.YELLOW);
 		//Initial Text ----------------------------
 		btnAcce.setText("Accelerometer OFF");
-		setUIState(false);
+		btnState = false;
+		setBtnState(btnState);
 		editThr.setText("800");
 		txtCurrThr.setText("Current Thrust: 800");
 		
@@ -335,17 +354,18 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub		
+		vibrator.vibrate(100);
 		switch(v.getId()){
 		case R.id.btn_thr:			
 			//get the input thrust value type in EditText
 			currThr = Integer.parseInt(editThr.getText().toString().trim());
-			if(currThr > 1800 ) currThr = 1800;
+			if(currThr > 1400 ) currThr = 1400;
 			else if(currThr < 800) currThr = 800;
 			sendThrust();			
 			break;
 			
 		case R.id.btn_rise:			
-			currThr = (currThr >= 1800)?1800:currThr + ThrScale;
+			currThr = (currThr >= 1400)?1400:currThr + ThrScale;
 			sendThrust();			
 			break;
 			
@@ -355,9 +375,20 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			break;
 			
 		case R.id.btn_land:
-			Thread t_landing = new Thread(run_landing);
-			t_landing.start();
+			//Thread t_landing = new Thread(run_landing);
+			//t_landing.start();
+			udpSocket.SendData("land\n");
+			currThr = 800;
 			btnLand.setClickable(false);
+					
+			//Display send thrust on TextView
+			sb = new StringBuilder();
+			sb.append("Current Thrust: ");
+			sb.append(String.valueOf(currThr));
+			txtCurrThr.setText(sb.toString());
+			
+			btnTakeOff.setClickable(false);
+			btnTakeOff.setBackgroundColor(Color.DKGRAY);
 			break;
 			
 		case R.id.btnAcc:
@@ -395,14 +426,37 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			ThrScale = (ThrScale > 50)?50:( (ThrScale < 15)?15:ThrScale );
 			btnScale.setText(String.valueOf(ThrScale));
 			break;
+		case R.id.btnLock:
+			btnState = !btnState;
+			setBtnState(btnState);
+			if(btnState) btnLock.setText("unlock");
+			else btnLock.setText("lock");
+			break;
+		case R.id.btn_takeOff:
+			if(currThr > 1300){
+				currThr = 1375;
+				sendThrust();
+			}
+			break;
+		case R.id.btnRise25:
+			currThr = (currThr >= 1400)?1400:currThr + 25;
+			sendThrust();
+			break;
 		default:;
 		
 		}//End of switch
-		if(currThr > 800){
+		if(currThr > 1300 && v.getId() == R.id.btnRise25){
+			btnTakeOff.setClickable(true);
+			btnTakeOff.setBackgroundColor(Color.GREEN);
+		}else{
+			btnTakeOff.setClickable(false);
+			btnTakeOff.setBackgroundColor(Color.DKGRAY);
+		}
+		
+		if(currThr > 800 && btnState){
 			btnLand.setClickable(true);
 			btnLand.setBackgroundColor(Color.GREEN);
-		}
-		else{
+		}else{
 			btnLand.setClickable(false);
 			btnLand.setBackgroundColor(Color.RED);
 		}
@@ -430,6 +484,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		setView();
 		setSocket();
 		
+		vibrator = (Vibrator) getApplication().getSystemService(Context.VIBRATOR_SERVICE);
 		mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		acce = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER); 
 	}
