@@ -270,7 +270,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		btnFall.setClickable(state);
 		btnLand.setClickable(state);
 		btnAcce.setClickable(state);
-		btnShutdown.setClickable(state);
+		//btnShutdown.setClickable(state);
 		btnRise25.setClickable(state);
 	}
 	
@@ -377,6 +377,13 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		case R.id.btn_land:
 			//Thread t_landing = new Thread(run_landing);
 			//t_landing.start();
+			
+			//Lock other buttons
+			btnState = !btnState;
+			setBtnState(btnState);
+			if(btnState) btnLock.setText("unlock");
+			else btnLock.setText("lock");
+			
 			udpSocket.SendData("land\n");
 			currThr = 800;
 			btnLand.setClickable(false);
@@ -413,11 +420,28 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 				
 				btnAcce.setText("Accelerometer OFF");
 				
-				t_acce = new Thread(turnOFF_Acc); //One-short thread used to turn accelerm.
+				//One-short thread used to turn off accelerometer.
+				t_acce = new Thread(turnOFF_Acc); 
 				t_acce.start();
 			}
 			break;
 		case R.id.btn_shutdown:
+			
+			//Stop the Accelerometer thread used for Tx Setpoint ------
+			t_run_flag = stopThread(t_acce);
+			t_acce = null;
+			btnAcce.setText("Accelerometer OFF");
+						
+			//Lock other buttons
+			if(btnState){
+				btnState = !btnState;
+				setBtnState(btnState);
+				if(btnState) btnLock.setText("unlock");
+				else btnLock.setText("lock");
+			}
+
+			
+			
 			currThr = 800;
 			sendThrust();
 			break;
