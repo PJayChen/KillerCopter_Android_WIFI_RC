@@ -43,7 +43,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	private Sensor acce; //accelerometer
 	private SensorManager mySensorManager; //the manager of all sensor
 	private boolean accFlag = true; //enable accelerometer or not
-	private float x, y;
+	private int pitch, roll;
 	
 	//Thread ---------------------------	
 	private static final int T_ACC_PITCH = 1, T_ACC_ROLL = 2, T_LANDING = 3, T_ACC_OFF = 4;
@@ -57,24 +57,20 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 				case T_ACC_PITCH:
 					btnAcce.setText(msg.getData().getString("pitch_SP") + msg.getData().getString("roll_SP")); 
 					udpSocket.SendData(msg.getData().getString("pitch_SP_udp"));
-					//udpSocket.SendData(msg.getData().getString("roll_SP_udp"));
+
 					this.removeMessages(T_ACC_PITCH);				
-					System.out.println("Accelermeter send data!!!!");
+					//System.out.println("Accelermeter send data!!!!");
+					
 					if(t_run_flag == false){
 						btnAcce.setText("Accelerometer OFF");
-						//udpSocket.SendData("pitch\n");
-						//udpSocket.SendData("roll\n");
+
 					}
 					break;
 				case T_ACC_ROLL:
+					btnAcce.setText(msg.getData().getString("pitch_SP") + msg.getData().getString("roll_SP")); 
 					udpSocket.SendData(msg.getData().getString("roll_SP_udp"));
 					this.removeMessages(T_ACC_ROLL);
 					
-					//if(t_run_flag == false){
-						//btnAcce.setText("Accelerometer OFF");
-						//udpSocket.SendData("pitch\n");
-						//udpSocket.SendData("roll\n");
-					//}
 					break;
 				case T_LANDING:
 					sendThrust();
@@ -88,7 +84,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					}
 					
 					this.removeMessages(T_LANDING);
-					System.out.println("Landing!!!!");
+					//System.out.println("Landing!!!!");
 					break;
 				case T_ACC_OFF:
 					udpSocket.SendData(msg.getData().getString("outdata"));
@@ -114,60 +110,93 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	//A thread for determine Setpoint  ------------------------------------
 	private Thread t_acce;
 	private boolean t_run_flag = true;
+	private boolean P_flag = false, R_flag = false;
+	private int lastPitch, lastRoll;
 	private Runnable run_updateAcc = new Runnable(){
 		public void run(){
 			
 			System.out.println("run_updateAcc is working!!!!");
-						
-			String pitch_SP = null, roll_SP = null; //setting point of pitch and roll			
+			
+			String pitch_SP = null, roll_SP = null; //setting point of pitch and roll	
+			String lastP_SP = "pitch", lastR_SP = "roll";
+		    lastPitch = 0; lastRoll = 0;
 				try {			
 					while(t_run_flag){
-						Thread.sleep(500);
+						//Thread.sleep(500);
 						
 						Bundle dataBd = new Bundle();
 						//Pitch part ------------------------------------------------
 						
-						if(x > 5){
-							pitch_SP = "pitch p";
-						}else if(x < -5){
-							pitch_SP = "pitch n";
+						if( Math.abs(Math.abs(lastPitch) - Math.abs(pitch)) >= 1 ){
+							//System.out.println("current pitch bigger than last!!!!");
+							P_flag = true;
+							if(pitch >= 5){
+								pitch_SP = "pitch p";
+							}else if(pitch <= -5){
+								pitch_SP = "pitch n";
+							}else{
+								pitch_SP = "pitch";
+							}
+							lastP_SP = pitch_SP;
+							
+							dataBd.putString("pitch_SP", pitch_SP + "(" + String.valueOf(pitch) + "), " );
+							pitch_SP = pitch_SP + "\n";
+							dataBd.putString("pitch_SP_udp", pitch_SP);
+							pitch_SP = null;
 						}else{
-							pitch_SP = "pitch";
+							//System.out.println("current pitch(" + String.valueOf(pitch) + ") smaller than last (" + String.valueOf(lastPitch) +  "!!!!");
+							P_flag = false;
+							pitch_SP = lastP_SP; // current SP == last SP
+							dataBd.putString("pitch_SP", lastP_SP + "(" + String.valueOf(lastPitch) + "), " );
+							pitch_SP = pitch_SP + "\n";
+							dataBd.putString("pitch_SP_udp", pitch_SP);
+							pitch_SP = null;
 						}
-						
-						dataBd.putString("pitch_SP", pitch_SP + "(" + String.valueOf(x) + "), " );
-						pitch_SP = pitch_SP + "\n";
-						dataBd.putString("pitch_SP_udp", pitch_SP);
-						pitch_SP = null;
+						lastPitch = pitch;
 						
 						//Roll part -------------------------------------------------
-						if(y > 5){
-							roll_SP = "roll p";
-						}else if(y < -5){
-							roll_SP = "roll n";
-						}else{
-							roll_SP = "roll";
-						}
 						
-						dataBd.putString("roll_SP", roll_SP + "(" + String.valueOf(y) + ")");
-						roll_SP = roll_SP + "\n";
-						dataBd.putString("roll_SP_udp", roll_SP);
-						roll_SP = null;
+						if( Math.abs(Math.abs(lastRoll) - Math.abs(roll)) >= 1 ){
+							R_flag = true;
+							if(roll >= 5){
+								roll_SP = "roll p";
+							}else if(roll <= -5){
+								roll_SP = "roll n";
+							}else{
+								roll_SP = "roll";
+							}
+							lastR_SP = roll_SP;
+							
+							dataBd.putString("roll_SP", roll_SP + "(" + String.valueOf(roll) + ")");
+							roll_SP = roll_SP + "\n";
+							dataBd.putString("roll_SP_udp", roll_SP);
+							roll_SP = null;
+						}else{
+							//System.out.println("current pitch(" + String.valueOf(roll) + ") smaller than last (" + String.valueOf(lastRoll) +  "!!!!");
+							R_flag = false;
+							roll_SP = lastR_SP; //current SP == last SP
+							dataBd.putString("roll_SP", lastR_SP + "(" + String.valueOf(lastRoll) + ")");
+							roll_SP = roll_SP + "\n";
+							dataBd.putString("roll_SP_udp", roll_SP);
+							roll_SP = null;
+						}
+						lastRoll = roll;
 						
 						//Send data to UI handler
-						//if(flag_send){
-						Message msg = new Message();
-						msg.what = T_ACC_PITCH;
-						msg.setData(dataBd);
-						UI_Handler.sendMessage(msg);
-						
-						Thread.sleep(500);
-						
-						msg = new Message();
-						msg.what = T_ACC_ROLL;
-						msg.setData(dataBd);
-						UI_Handler.sendMessage(msg);
-						//}
+						if(P_flag){
+							Message msg = new Message();
+							msg.what = T_ACC_PITCH;
+							msg.setData(dataBd);
+							UI_Handler.sendMessage(msg);
+						}
+						Thread.sleep(200);
+						if(R_flag){
+							Message msg = new Message();
+							msg.what = T_ACC_ROLL;
+							msg.setData(dataBd);
+							UI_Handler.sendMessage(msg);
+						}
+
 					}//End of while
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
@@ -403,6 +432,8 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 				mySensorManager.registerListener(this, acce, SensorManager.SENSOR_DELAY_NORMAL);
 				accFlag = false; //acce will turn off while push down the button next time 
 				
+				btnAcce.setText("Accelerometer ON");
+				
 				//Create a thread for Tx Setpoint and start it ------
 				t_run_flag = true;
 				t_acce = new Thread(run_updateAcc);
@@ -439,9 +470,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 				if(btnState) btnLock.setText("unlock");
 				else btnLock.setText("lock");
 			}
-
-			
-			
+			//reset thrust
 			currThr = 800;
 			sendThrust();
 			break;
@@ -496,8 +525,8 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		// TODO Auto-generated method stub
-		x = event.values[0];
-		y = event.values[1];
+		pitch = (int)event.values[0];
+		roll = (int)event.values[1];
 	}
 
 	@Override
