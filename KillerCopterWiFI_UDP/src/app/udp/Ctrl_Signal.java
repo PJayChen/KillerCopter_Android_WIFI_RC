@@ -132,9 +132,9 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 							//System.out.println("current pitch bigger than last!!!!");
 							P_flag = true;
 							if(pitch >= 5){
-								pitch_SP = "pitch n";
-							}else if(pitch <= -5){
 								pitch_SP = "pitch p";
+							}else if(pitch <= -5){
+								pitch_SP = "pitch n";
 							}else{
 								pitch_SP = "pitch";
 							}
@@ -160,9 +160,9 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 						if( Math.abs(Math.abs(lastRoll) - Math.abs(roll)) >= 1 ){
 							R_flag = true;
 							if(roll >= 5){
-								roll_SP = "roll n";
-							}else if(roll <= -5){
 								roll_SP = "roll p";
+							}else if(roll <= -5){
+								roll_SP = "roll n";
 							}else{
 								roll_SP = "roll";
 							}
@@ -190,7 +190,9 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 							msg.setData(dataBd);
 							UI_Handler.sendMessage(msg);
 						}
-						Thread.sleep(200);
+						
+						Thread.sleep(500);
+						
 						if(R_flag){
 							Message msg = new Message();
 							msg.what = T_ACC_ROLL;
