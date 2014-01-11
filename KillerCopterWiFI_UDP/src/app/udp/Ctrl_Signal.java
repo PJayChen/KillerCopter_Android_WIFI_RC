@@ -65,12 +65,13 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 						btnAcce.setText("Accelerometer OFF");
 
 					}
+					vibrator.vibrate(50);
 					break;
 				case T_ACC_ROLL:
 					btnAcce.setText(msg.getData().getString("pitch_SP") + msg.getData().getString("roll_SP")); 
 					udpSocket.SendData(msg.getData().getString("roll_SP_udp"));
 					this.removeMessages(T_ACC_ROLL);
-					
+					vibrator.vibrate(50);
 					break;
 				case T_LANDING:
 					sendThrust();
