@@ -549,6 +549,8 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		t_run_flag = stopThread(t_acce);
 		t_acce = null;
 		
+		udpSocket.DisConnectSocket();
+		
 	}
 	
 }

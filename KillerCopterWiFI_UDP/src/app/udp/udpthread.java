@@ -29,6 +29,8 @@ public class udpthread implements Runnable
 	private byte[] fBuffer = null;
 	private byte[] sBuffer = null;
 	
+	private boolean threadFlag;
+	
 	private SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 	
 	private Handler vhandler = new Handler()
@@ -97,17 +99,20 @@ public class udpthread implements Runnable
 	{
 		if (rthread == null)
 		{
+			threadFlag = true;
 			rthread = new Thread(this);
 			rthread.start();
 		}
 	}
 	
-	@SuppressWarnings("deprecation")
+	
 	private void stopThread()
 	{
 		if (rthread != null)
 		{
-			rthread.stop();
+			threadFlag = false;
+			rthread.interrupt();
+			//rthread.stop();
 			rthread = null;
 		}
 	}
@@ -115,16 +120,18 @@ public class udpthread implements Runnable
 	@Override
 	public void run()
 	{
-		while (Thread.currentThread() == rthread)
+		if(Thread.currentThread() == rthread)
 		{
-			try
-			{
-				recvData();
-				vhandler.sendEmptyMessage(0);
-				Thread.sleep(100);
-			} catch (InterruptedException e)
-			{
-				e.printStackTrace();
+			while(threadFlag){
+				try
+				{
+					recvData();
+					vhandler.sendEmptyMessage(0);
+					Thread.sleep(100);
+				} catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
 			}
 		}
 	}
