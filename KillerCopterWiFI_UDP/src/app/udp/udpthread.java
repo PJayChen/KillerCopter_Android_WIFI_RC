@@ -114,6 +114,7 @@ public class udpthread implements Runnable
 			rthread.interrupt();
 			//rthread.stop();
 			rthread = null;
+			System.out.println("rthread is stop");
 		}
 	}
 	
@@ -128,6 +129,7 @@ public class udpthread implements Runnable
 					recvData();
 					vhandler.sendEmptyMessage(0);
 					Thread.sleep(100);
+					System.out.println("rthread: recive data!");
 				} catch (InterruptedException e)
 				{
 					e.printStackTrace();
@@ -236,7 +238,7 @@ public class udpthread implements Runnable
 			StringBuilder sb = new StringBuilder();
 			sb.append(etshowrdata.getText().toString().trim());
 			sb.append("\n");
-			sb.append("Send successfully!");
+			sb.append("Send: " + SData);
 			etshowrdata.setText(sb.toString().trim());
 			sb.delete(0, sb.length());
 			sb = null;
