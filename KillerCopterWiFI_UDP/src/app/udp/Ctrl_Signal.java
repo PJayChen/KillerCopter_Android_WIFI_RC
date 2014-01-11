@@ -46,7 +46,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	private int pitch, roll;
 	
 	//Thread ---------------------------	
-	private static final int T_ACC_PITCH = 1, T_ACC_ROLL = 2, T_LANDING = 3, T_ACC_OFF = 4;
+	private static final int T_ACC = 0, T_ACC_PITCH = 1, T_ACC_ROLL = 2, T_LANDING = 3, T_ACC_OFF = 4;
 	private boolean LandBtnColor = true;
 	//UI(main) thread handler
 	private Handler UI_Handler = new Handler(){
@@ -54,9 +54,15 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 		public void handleMessage(Message msg){
 			
 			switch(msg.what){
+				case T_ACC:
+					udpSocket.SendData(msg.getData().getString("tune"));
+					vibrator.vibrate(50);
+					System.out.println("tune: " + msg.getData().getString("tune"));
+					break;
+			
 				case T_ACC_PITCH:
 					btnAcce.setText(msg.getData().getString("pitch_SP") + msg.getData().getString("roll_SP")); 
-					udpSocket.SendData(msg.getData().getString("pitch_SP_udp"));
+					//udpSocket.SendData(msg.getData().getString("pitch_SP_udp"));
 
 					this.removeMessages(T_ACC_PITCH);				
 					//System.out.println("Accelermeter send data!!!!");
@@ -69,7 +75,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 					break;
 				case T_ACC_ROLL:
 					btnAcce.setText(msg.getData().getString("pitch_SP") + msg.getData().getString("roll_SP")); 
-					udpSocket.SendData(msg.getData().getString("roll_SP_udp"));
+					//udpSocket.SendData(msg.getData().getString("roll_SP_udp"));
 					this.removeMessages(T_ACC_ROLL);
 					vibrator.vibrate(50);
 					break;
@@ -113,17 +119,19 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 	private boolean t_run_flag = true;
 	private boolean P_flag = false, R_flag = false;
 	private int lastPitch, lastRoll;
+	
 	private Runnable run_updateAcc = new Runnable(){
 		public void run(){
 			
 			System.out.println("run_updateAcc is working!!!!");
 			
 			String pitch_SP = null, roll_SP = null; //setting point of pitch and roll	
-			String lastP_SP = "pitch", lastR_SP = "roll";
+			String lastP_SP = "0", lastR_SP = "0";
+			String tune = "tune 0 0";
 		    lastPitch = 0; lastRoll = 0;
+		    
 				try {			
 					while(t_run_flag){
-						//Thread.sleep(500);
 						
 						Bundle dataBd = new Bundle();
 						//Pitch part ------------------------------------------------
@@ -132,26 +140,28 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 							//System.out.println("current pitch bigger than last!!!!");
 							P_flag = true;
 							if(pitch >= 5){
-								pitch_SP = "pitch p";
+								pitch_SP = "p";
 							}else if(pitch <= -5){
-								pitch_SP = "pitch n";
+								pitch_SP = "n";
 							}else{
-								pitch_SP = "pitch";
+								pitch_SP = "0";
 							}
 							lastP_SP = pitch_SP;
 							
-							dataBd.putString("pitch_SP", pitch_SP + "(" + String.valueOf(pitch) + "), " );
-							pitch_SP = pitch_SP + "\n";
+							
+							
+							dataBd.putString("pitch_SP", "pitch " + pitch_SP + "(" + String.valueOf(pitch) + "), " );
+							//pitch_SP = pitch_SP + "\n";
 							dataBd.putString("pitch_SP_udp", pitch_SP);
-							pitch_SP = null;
+							//pitch_SP = null;
 						}else{
 							//System.out.println("current pitch(" + String.valueOf(pitch) + ") smaller than last (" + String.valueOf(lastPitch) +  "!!!!");
 							P_flag = false;
 							pitch_SP = lastP_SP; // current SP == last SP
-							dataBd.putString("pitch_SP", lastP_SP + "(" + String.valueOf(lastPitch) + "), " );
-							pitch_SP = pitch_SP + "\n";
+							dataBd.putString("pitch_SP", "pitch " + lastP_SP + "(" + String.valueOf(lastPitch) + "), " );
+							//pitch_SP = pitch_SP + "\n";
 							dataBd.putString("pitch_SP_udp", pitch_SP);
-							pitch_SP = null;
+							//pitch_SP = null;
 						}
 						lastPitch = pitch;
 						
@@ -160,45 +170,55 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 						if( Math.abs(Math.abs(lastRoll) - Math.abs(roll)) >= 1 ){
 							R_flag = true;
 							if(roll >= 5){
-								roll_SP = "roll p";
+								roll_SP = "p";
 							}else if(roll <= -5){
-								roll_SP = "roll n";
+								roll_SP = "n";
 							}else{
-								roll_SP = "roll";
+								roll_SP = "0";
 							}
 							lastR_SP = roll_SP;
 							
-							dataBd.putString("roll_SP", roll_SP + "(" + String.valueOf(roll) + ")");
-							roll_SP = roll_SP + "\n";
+							dataBd.putString("roll_SP", "roll " + roll_SP + "(" + String.valueOf(roll) + ")");
+							//roll_SP = roll_SP + "\n";
 							dataBd.putString("roll_SP_udp", roll_SP);
-							roll_SP = null;
+							//roll_SP = null;
 						}else{
 							//System.out.println("current pitch(" + String.valueOf(roll) + ") smaller than last (" + String.valueOf(lastRoll) +  "!!!!");
 							R_flag = false;
 							roll_SP = lastR_SP; //current SP == last SP
-							dataBd.putString("roll_SP", lastR_SP + "(" + String.valueOf(lastRoll) + ")");
-							roll_SP = roll_SP + "\n";
+							dataBd.putString("roll_SP", "roll " + lastR_SP + "(" + String.valueOf(lastRoll) + ")");
+							//roll_SP = roll_SP + "\n";
 							dataBd.putString("roll_SP_udp", roll_SP);
-							roll_SP = null;
+							//roll_SP = null;
 						}
 						lastRoll = roll;
 						
 						//Send data to UI handler
-						if(P_flag){
+						if(P_flag || R_flag){
 							Message msg = new Message();
-							msg.what = T_ACC_PITCH;
+							msg.what = T_ACC;
+							tune = "tune " + pitch_SP + " " + roll_SP + "\n";
+							dataBd.putString("tune", tune);
 							msg.setData(dataBd);
 							UI_Handler.sendMessage(msg);
 						}
 						
-						Thread.sleep(500);
+						if(P_flag){
+							Message msgp = new Message();
+							msgp.what = T_ACC_PITCH;
+							msgp.setData(dataBd);
+							UI_Handler.sendMessage(msgp);
+						}
+						
+						Thread.sleep(100);
 						
 						if(R_flag){
-							Message msg = new Message();
-							msg.what = T_ACC_ROLL;
-							msg.setData(dataBd);
-							UI_Handler.sendMessage(msg);
+							Message msgr = new Message();
+							msgr.what = T_ACC_ROLL;
+							msgr.setData(dataBd);
+							UI_Handler.sendMessage(msgr);
 						}
+						
 
 					}//End of while
 				} catch (InterruptedException e) {
