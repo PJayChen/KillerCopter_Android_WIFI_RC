@@ -71,13 +71,13 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 						btnAcce.setText("Accelerometer OFF");
 
 					}
-					vibrator.vibrate(50);
+				//	vibrator.vibrate(50);
 					break;
 				case T_ACC_ROLL:
 					btnAcce.setText(msg.getData().getString("pitch_SP") + msg.getData().getString("roll_SP")); 
 					//udpSocket.SendData(msg.getData().getString("roll_SP_udp"));
 					this.removeMessages(T_ACC_ROLL);
-					vibrator.vibrate(50);
+				//	vibrator.vibrate(50);
 					break;
 				case T_LANDING:
 					sendThrust();
@@ -136,12 +136,12 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 						Bundle dataBd = new Bundle();
 						//Pitch part ------------------------------------------------
 						
-						if( Math.abs(Math.abs(lastPitch) - Math.abs(pitch)) >= 1 ){
+						if( Math.abs(Math.abs(lastPitch) - Math.abs(pitch)) >= 2 ){
 							//System.out.println("current pitch bigger than last!!!!");
 							P_flag = true;
-							if(pitch >= 5){
+							if(pitch >= 4){
 								pitch_SP = "p";
-							}else if(pitch <= -5){
+							}else if(pitch <= -4){
 								pitch_SP = "n";
 							}else{
 								pitch_SP = "0";
@@ -167,11 +167,11 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 						
 						//Roll part -------------------------------------------------
 						
-						if( Math.abs(Math.abs(lastRoll) - Math.abs(roll)) >= 1 ){
+						if( Math.abs(Math.abs(lastRoll) - Math.abs(roll)) >= 2 ){
 							R_flag = true;
-							if(roll >= 5){
+							if(roll >= 4){
 								roll_SP = "p";
-							}else if(roll <= -5){
+							}else if(roll <= -4){
 								roll_SP = "n";
 							}else{
 								roll_SP = "0";
@@ -210,7 +210,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 							UI_Handler.sendMessage(msgp);
 						}
 						
-						Thread.sleep(100);
+						
 						
 						if(R_flag){
 							Message msgr = new Message();
@@ -219,7 +219,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 							UI_Handler.sendMessage(msgr);
 						}
 						
-
+						Thread.sleep(400);
 					}//End of while
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
@@ -254,7 +254,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			System.out.println("turnOFF_Acc Finish");
 		}
 	};
-	
+	/*
 	private Runnable run_landing = new Runnable(){
 		public void run(){
 			
@@ -283,7 +283,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 			}
 		}
 	};
-	
+	*/
 	private void setSocket(){
 		udpSocket = new udpthread(editRx);
 		//get data from IP_setting.java
@@ -547,7 +547,7 @@ public class Ctrl_Signal extends Activity implements View.OnClickListener, Senso
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-		// TODO Auto-generated method stub
+		
 		pitch = (int)event.values[0];
 		roll = (int)event.values[1];
 	}
